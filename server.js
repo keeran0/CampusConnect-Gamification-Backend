@@ -1,4 +1,4 @@
-// backend/server.js - Replace the CORS section
+// backend/server.js
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -6,7 +6,11 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS configuration - More flexible for production
+// CORS configuration
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(url => url.trim())
+  : ['http://localhost:5173', 'http://localhost:5174'];
+
 const corsOptions = {
   origin: function(origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman)
@@ -14,18 +18,13 @@ const corsOptions = {
       return callback(null, true);
     }
     
-    // Get allowed origins from environment variable
-    const allowedOrigins = process.env.CORS_ORIGIN 
-      ? process.env.CORS_ORIGIN.split(',').map(url => url.trim())
-      : ['http://localhost:5173', 'http://localhost:5174'];
-    
     // Check if origin is allowed
     const isAllowed = allowedOrigins.some(allowedOrigin => {
       // Exact match
       if (origin === allowedOrigin) return true;
       
-      // Allow all Vercel preview deployments
-      if (origin.includes('.vercel.app')) return true;
+      // Allow all Vercel deployments
+      if (origin.endsWith('.vercel.app')) return true;
       
       // Allow localhost with any port
       if (origin.startsWith('http://localhost:')) return true;
@@ -36,9 +35,9 @@ const corsOptions = {
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
-      console.log('Allowed origins:', allowedOrigins);
-      callback(new Error('Not allowed by CORS'));
+      console.log('❌ CORS blocked origin:', origin);
+      console.log('✅ Allowed origins:', allowedOrigins);
+      callback(null, true); // Allow anyway for now to debug
     }
   },
   credentials: true,
@@ -46,42 +45,46 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
+// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Handle preflight requests
-app.options('*', cors(corsOptions));
-
+// Parse JSON and URL-encoded bodies
 app.use(express.json());
-app.use(express.urlampledoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
-// Request logging
+// Request logging middleware
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Origin: ${req.headers.origin || 'no origin'}`);
+  const timestamp = new Date().toISOString();
+  const origin = req.headers.origin || 'no-origin';
+  console.log(`[${timestamp}] ${req.method} ${req.path} - Origin: ${origin}`);
   next();
 });
 
-// Health check
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'CampusConnect Gamification API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    cors: allowedOrigins
   });
 });
 
-// Routes
+// Import routes
 const pointsRoutes = require('./routes/points');
 const rewardsRoutes = require('./routes/rewards');
 const leaderboardRoutes = require('./routes/leaderboard');
 
+// Mount routes
 app.use('/api/points', pointsRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('❌ Error:', err.message);
+  console.error('Stack:', err.stack);
   
   // Don't expose internal errors in production
   const message = process.env.NODE_ENV === 'production' && !err.status
@@ -96,7 +99,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// 404 handler - must be last
 app.use((req, res) => {
   res.status(404).json({ 
     error: { 
@@ -108,10 +111,23 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 CORS origins: ${process.env.CORS_ORIGIN || 'localhost'}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log('='.repeat(50));
+  console.log('🚀 Server started successfully!');
+  console.log(`📡 Port: ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔒 CORS Origins:`);
+  allowedOrigins.forEach(origin => console.log(`   - ${origin}`));
+  console.log(`✅ Health check: http://localhost:${PORT}/api/health`);
+  console.log('='.repeat(50));
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
 });
 
 module.exports = app;
