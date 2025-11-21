@@ -18,7 +18,7 @@ const mockRewards = [
     description: 'Official TMU branded hoodie in your choice of color',
     pointsCost: 500,
     category: 'merchandise',
-    imageUrl: 'https://via.placeholder.com/300x300/3b82f6/ffffff?text=TMU+Hoodie',
+    imageUrl: '/images/rewards/hoodie.jpg',
     stock: 25,
     isActive: true
   },
@@ -28,7 +28,7 @@ const mockRewards = [
     description: 'Enjoy your favorite coffee on us',
     pointsCost: 200,
     category: 'food',
-    imageUrl: 'https://via.placeholder.com/300x300/10b981/ffffff?text=Starbucks',
+    imageUrl: '/images/rewards/starbucks.png',
     stock: 50,
     isActive: true
   },
@@ -38,7 +38,7 @@ const mockRewards = [
     description: 'Free access to all gym facilities for one month',
     pointsCost: 300,
     category: 'services',
-    imageUrl: 'https://via.placeholder.com/300x300/8b5cf6/ffffff?text=Gym+Pass',
+    imageUrl: '/images/rewards/gym.png',
     stock: 15,
     isActive: true
   },
@@ -48,7 +48,7 @@ const mockRewards = [
     description: 'Perfect for your morning coffee run',
     pointsCost: 100,
     category: 'food',
-    imageUrl: 'https://via.placeholder.com/300x300/dc2626/ffffff?text=Tim+Hortons',
+    imageUrl: '/images/rewards/timhortons.png',
     stock: 100,
     isActive: true
   },
@@ -58,10 +58,20 @@ const mockRewards = [
     description: 'Eco-friendly stainless steel water bottle',
     pointsCost: 150,
     category: 'merchandise',
-    imageUrl: 'https://via.placeholder.com/300x300/f59e0b/ffffff?text=Water+Bottle',
+    imageUrl: '/images/rewards/waterbottle.png',
     stock: 40,
     isActive: true
-  }
+  },
+  {
+    id: 'reward_6',
+    title: 'McDonalds $10 Gift Card',
+    description: 'Great for a quick meal',
+    pointsCost: 200,
+    category: 'food',
+    imageUrl: '/images/rewards/mcdonalds.png',
+    stock: 100,
+    isActive: true
+  },
 ];
 
 // Mock points history
